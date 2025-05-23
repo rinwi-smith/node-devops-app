@@ -1,20 +1,26 @@
 pipeline {
     agent any
     stages {
-        stage('Build Docker Image') {
+        stage('Debug Environment') {
             steps {
-                sh 'docker build -t node-devops-app:latest .'
+                sh '''
+                    echo "PATH is: $PATH"
+                    ls -l /usr/bin/docker || echo "Docker binary not found"
+                    /usr/bin/docker --version || echo "Docker version failed"
+                    pwd
+                    ls -l /var/jenkins_home/workspace/Node-DevOps-Pipeline || echo "Workspace not found"
+                '''
             }
         }
-        stage('Test') {
+        stage('Build Docker Image') {
             steps {
-                sh 'docker run --rm node-devops-app:latest npm test'
+                sh 'export PATH=$PATH:/usr/bin && /usr/bin/docker build -t node-devops-app:latest .'
             }
         }
         stage('Run Docker Container') {
             steps {
-                sh 'docker rm -f node-app-container || true'
-                sh 'docker run -d -p 3000:3000 --name node-app-container node-devops-app:latest'
+                sh 'export PATH=$PATH:/usr/bin && /usr/bin/docker rm -f node-app-container || true'
+                sh 'export PATH=$PATH:/usr/bin && /usr/bin/docker run -d -p 3000:3000 --name node-app-container node-devops-app:latest'
             }
         }
     }
